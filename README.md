@@ -26,8 +26,7 @@ PARA FLUJO DE TRABAJO.
 
 Crear una rama nueva
 Antes de empezar una tarea, crea una nueva rama basada en main:
-|
-v
+
 git checkout main
 git pull origin main
 git checkout -b feature/nombre-de-la-tarea
@@ -36,15 +35,13 @@ Ejemplo: feature/formulario-reporte
 
 Hacer cambios y subirlos
 Una vez que termines una parte:
-|
-v
+
 git add .
 git commit -m "Descripción clara de lo que hiciste"
 git push origin feature/nombre-de-la-tarea
 
 Integrar cambios a main directamente
-|
-v
+
 git checkout main
 git pull origin main
 git merge feature/nombre-de-la-tarea
