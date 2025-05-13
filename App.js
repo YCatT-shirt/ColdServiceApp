@@ -23,6 +23,11 @@ import ConsultarErroresScreen from './querys/ConsultarErrores';
 import CostosReparacionesScreen from './reports/CostoReparacionesScreen';
 import Chat from './utils/Chat';
 import ChatRoom from './utils/ChatRoom';
+import ViaticosScreen from './reports/ViaticosScreen';
+import LicenciasTecnicosScreen from './utils/LicenciasTecnicosScreen.js';
+import EquipoConfiguradoScreen from './reports/EquipoConfiguradoScreen';
+import ConsultarEquiposConfiguradosScreen from './querys/ConsultarEquiposConfiguradosScreen';
+
 //_______________________________________________________________________________________________________________________________
 
 // Crea el navegador de pila
@@ -32,7 +37,7 @@ const Stack = createNativeStackNavigator();
 function MyStack() {
   return (
     <ThemeProvider>
-      <Stack.Navigator>
+      <Stack.Navigator initialRouteName="LoginScreen">
         {/* Pantalla de inicio de sesión */}
         <Stack.Screen
           name="LoginScreen"
@@ -50,6 +55,26 @@ function MyStack() {
           name="UserList"
           component={UserList}
           options={{ title: 'Lista de Usuarios' }}
+        />
+        <Stack.Screen
+          name="EquipoConfiguradoScreen"
+          component={EquipoConfiguradoScreen}
+          options={{ title: 'Equipo configurado' }}
+        />
+        <Stack.Screen
+          name="ConsultarEquiposConfiguradosScreen"
+          component={ConsultarEquiposConfiguradosScreen}
+          options={{ title: 'Consulta de equipos configurados' }}
+        />
+        <Stack.Screen
+          name="LicenciasTecnicosScreen"
+          component={LicenciasTecnicosScreen}
+          options={{ title: 'Licencias Tecnicos' }}
+        />
+        <Stack.Screen
+          name="ViaticosScreen"
+          component={ViaticosScreen}
+          options={{ title: 'Viaticos' }}
         />
         <Stack.Screen
           name="CostoReparacionesScreen"
@@ -139,3 +164,5 @@ export default function App() {
     </AuthProvider>
   );
 }
+//Buenas buenas, ¿puedes verlo?dfdfdfdfdfdf algo bien es 100% tiempo real
+// se rifó mi compa que me lo recomendó ajajajjajajaja

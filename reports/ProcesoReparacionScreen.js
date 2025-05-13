@@ -15,6 +15,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import firebase from '../services/firebase';
 import Signature from 'react-native-signature-canvas'; // Asegúrate de tener esta importación
 import Icon from 'react-native-vector-icons/MaterialIcons'; // Para el icono en el botón
+import * as ImagePicker from 'expo-image-picker';
 const { db } = firebase;
 
 const CapturaProcesoReparacionScreen = () => {
@@ -46,6 +47,7 @@ const CapturaProcesoReparacionScreen = () => {
   const [trabajosEfectuados, setTrabajosEfectuados] = useState(''); // Nuevo campo
   const [gasRefrigerante, setGasRefrigerante] = useState(''); // Campo para gas refrigerante utilizado
   const [cargaGas, setCargaGas] = useState(''); // Nuevo estado para la carga de gas en gramos
+  const [images, setImages] = useState([]);
 
   // Nuevos estados para "Falla Reportada" y "Reportada Por"
   const [fallaReportada, setFallaReportada] = useState('');
@@ -56,6 +58,67 @@ const CapturaProcesoReparacionScreen = () => {
   const [otroMotivo, setOtroMotivo] = useState(''); // Aquí defines el setter correctamente
   const [signature, setSignature] = useState(null);
   const [showSignatureModal, setShowSignatureModal] = useState(false); // Para controlar el modal de firma
+  const [nombreFirmante, setNombreFirmante] = useState('');
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permiso denegado',
+        'Se requiere permiso para acceder a la cámara.',
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setImages((prev) => [...prev, result.assets[0].uri]);
+    }
+  };
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permiso denegado',
+        'Se requiere permiso para acceder a la galería.',
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setImages((prev) => [...prev, result.assets[0].uri]);
+    }
+  };
+
+  const removeImage = (index) => {
+    Alert.alert(
+      'Eliminar imagen',
+      '¿Estás seguro de que deseas eliminar esta imagen?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          onPress: () => {
+            const updated = [...images];
+            updated.splice(index, 1);
+            setImages(updated);
+          },
+          style: 'destructive',
+        },
+      ],
+    );
+  };
 
   const handlePress = (option) => {
     if (motivoCarga.includes(option)) {
@@ -149,6 +212,14 @@ const CapturaProcesoReparacionScreen = () => {
       return;
     }
 
+    if (!nombreFirmante.trim()) {
+      Alert.alert(
+        'Error',
+        'Por favor, ingrese Nombre y firma antes de guardar.',
+      );
+      return;
+    }
+
     // Verificar el contenido de los materiales antes de enviarlos a Firebase
     //console.log('Materiales:', materiales);
 
@@ -189,6 +260,8 @@ const CapturaProcesoReparacionScreen = () => {
           unidad: material.unidad,
         })),
         firma: signature, // <-- Asegúrate de guardar la firma aquí
+        nombre_firmante: nombreFirmante,
+        fotos: images,
       });
       Alert.alert('Éxito', 'Proceso de reparación guardado con éxito.');
       // Limpiar los campos después de guardar
@@ -341,8 +414,6 @@ const CapturaProcesoReparacionScreen = () => {
           </Text>
         </TouchableOpacity>
       </View>
-
-      <View style={styles.divider}></View>
 
       <Text style={styles.label}>Hora de reporte:</Text>
       <TouchableOpacity
@@ -520,6 +591,33 @@ const CapturaProcesoReparacionScreen = () => {
       />
       <View style={styles.divider}></View>
 
+      <Text style={styles.reportTitle}>IMAGENES DEL PIEZAS</Text>
+      <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
+        <Icon name="camera-alt" size={20} color="#fff" />
+        <Text style={styles.photoButtonText}>Tomar Foto</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+        <Icon name="photo-library" size={20} color="#fff" />
+        <Text style={styles.photoButtonText}>Seleccionar Foto</Text>
+      </TouchableOpacity>
+
+      {images.length > 0 && (
+        <ScrollView horizontal style={styles.imageContainer}>
+          {images.map((img, index) => (
+            <View key={index} style={styles.imageWrapper}>
+              <Image source={{ uri: img }} style={styles.imagePreview} />
+              <TouchableOpacity
+                style={styles.removeButton}
+                onPress={() => removeImage(index)}
+              >
+                <Icon name="close" size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
+      )}
+      <View style={styles.divider}></View>
       <Text style={styles.reportTitle}>DESCRIPCION DEL EQUIPO</Text>
       {/* Marca */}
       <Text style={styles.label}>Marca:</Text>
@@ -774,18 +872,33 @@ const CapturaProcesoReparacionScreen = () => {
               borderColor: '#ccc',
             }}
           />
+          <View style={{ height: 20 }} />
+          <Text style={styles.label}>Nombre del firmante</Text>
+          <TextInput
+            placeholder="Ingrese su nombre"
+            value={nombreFirmante}
+            onChangeText={setNombreFirmante}
+            style={{
+              width: '90%',
+              borderWidth: 1,
+              borderColor: '#ccc',
+              padding: 10,
+              borderRadius: 5,
+              marginTop: 10,
+            }}
+          />
         </View>
       )}
-
       {/* Botón para abrir el modal de firma */}
+      <View style={{ height: 30 }} />
       <TouchableOpacity
         style={[styles.photoButton, { backgroundColor: '#b7001f' }]}
         onPress={() => setShowSignatureModal(true)}
       >
         <Icon name="edit" size={20} color="#fff" />
-        <Text style={styles.photoButtonText}>Firmar</Text>
+        <Text style={styles.photoButtonText}>Firmar Reporte de Reparación</Text>
       </TouchableOpacity>
-
+      <View style={{ height: 50 }} />
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
@@ -808,19 +921,19 @@ const CapturaProcesoReparacionScreen = () => {
             confirmText="Guardar"
             // Elimina webStyle si no es necesario o ajústalo
             webStyle={`
-        .m-signature-pad--footer { 
-          display: flex;
-          justify-content: space-between;
-          padding: 10px;
-        }
-        .m-signature-pad--footer button {
-          background-color: #007bff;
-          color: #fff;
-          padding: 10px;
-          border: none;
-          border-radius: 5px;
-        }
-      `}
+            .m-signature-pad--footer { 
+              display: flex;
+              justify-content: space-between;
+              padding: 10px;
+            }
+            .m-signature-pad--footer button {
+              background-color: #007bff;
+              color: #fff;
+              padding: 10px;
+              border: none;
+              border-radius: 5px;
+            }
+          `}
           />
           <TouchableOpacity
             style={[
@@ -1033,6 +1146,47 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginLeft: 8,
     fontSize: 16,
+  },
+  imageContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  imageWrapper: {
+    position: 'relative',
+    marginRight: 10,
+  },
+  imagePreview: {
+    width: 120,
+    height: 120,
+    borderRadius: 10,
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: '#dc3545',
+    borderRadius: 15,
+    padding: 5,
+  },
+  photoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#28a745',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+  },
+  photoButtonText: {
+    color: '#fff',
+    marginLeft: 8,
+    fontSize: 16,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#007bff',
   },
 });
 
